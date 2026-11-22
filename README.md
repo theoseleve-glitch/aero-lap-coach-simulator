@@ -1,40 +1,61 @@
-# Aero Lap Coach Simulator — architecture review
-Status: **corrected review draft; no new solver implemented or source imported**.
+# Aero Lap Coach Simulator
 
-Aero Lap Coach is intended to become a standalone scientific engineering platform for aerodynamic and vehicle-dynamics simulation, progressing toward minimum-lap-time analysis and optimization. Its sole existing project foundation is Track Aero Platform v0.1.1 at C:\Users\Admin\Documents\simulation software.
+Aero Lap Coach is a scientific software project for studying how aerodynamics and vehicle dynamics influence circuit performance. Its vision is a reproducible engineering platform that connects explicit physical assumptions, numerical simulation and minimum-lap-time analysis, helping users understand the tradeoffs between drag, downforce, tyre capacity and vehicle setup.
 
-This review uses only that project's implementation, contracts and frozen decisions. Future algorithms must be designed for this platform. No material from other project source trees is included.
+**Current status: scientific design and development roadmap.** This repository contains documentation, not an executable simulator. It has no packaged source code, runnable examples or test suite, and no installation or simulation command is available yet.
 
-## Actual baseline
-The authorized source implements strict input contracts, unit normalization, canonical Study identity/provenance, moist-air density, constant-area aerodynamic forces, effective axle tyre capacity and quasi-static suspension compliance. It does not implement a coupled vehicle model, track conditioning, speed profiles, numerical motion integration or minimum-time optimization.
+## Scientific foundation and current capabilities
 
-Observed audit execution:
-- 298 tests passed in 9.18 s.
-- Ruff lint passed; 30 files passed format verification.
-- Strict mypy failed with three no-any-return diagnostics in tyres.py.
-- Complete supported workflow exited 1 after 24.2427697 s.
-- A separate synthetic scalar smoke calculation returned sensible atmosphere/force/compliance outputs documented in docs/NUMERICAL_VALIDATION.md.
+The technical documents describe a previously implemented foundation, Track Aero Platform v0.1.1. That implementation is not included in this repository. Its documented capabilities and the planned Aero Lap Coach extensions must be distinguished:
 
-These checks establish executable foundations, not a validated vehicle simulator or real-world predictive accuracy. No capability ceiling was changed.
+| Area | Documented foundation implementation | Planned development |
+|---|---|---|
+| Inputs and reproducibility | Strict input contracts, unit normalization, canonical Study identities and provenance | Conditioned track geometry, solver-input identities and reproducible run records |
+| Atmosphere | Moist-air density from explicit environmental inputs | Integration into the vehicle model with declared validity domains |
+| Aerodynamics | Constant-area drag and downforce with front/rear downforce allocation | Aero/setup studies; later, calibrated ride-height-dependent maps |
+| Tyres | Load-dependent effective-axle peak forces and combined-force capacity | Coupled vehicle feasibility; later, calibrated per-wheel and slip-based models |
+| Suspension | Quasi-static compliance for supplied axle loads | Integration with solved axle loads; later, transient chassis dynamics |
+| Vehicle and lap simulation | No coupled vehicle solver or lap-time calculation | Powertrain and braking, local equilibrium, fixed-path speed profiles and time integration |
+| Optimization and analysis | No minimum-time optimizer or executed parameter studies | Independent optimal-control reference, sensitivity and uncertainty analysis, then free-path optimization |
 
-## Read the review
-- [Architecture](docs/ARCHITECTURE.md): module inventory, subsystem interfaces and proposed integration.
-- [Physics models](docs/PHYSICS_MODELS.md): implemented equations, frozen future scope, later fidelity and unresolved decisions.
-- [Numerical validation](docs/NUMERICAL_VALIDATION.md): actual test evidence and proposed error budgets/benchmarks.
-- [Provenance](docs/PROVENANCE.md): unresolved reuse rights and extraction policy.
-- [Roadmap](ROADMAP.md): dependent multi-session engineering milestones.
-- [Evaluation facts](EVALUATION_FACTS.md): factual notes, not submission answers.
+The foundation provides scalar models and input infrastructure. It does not establish a validated vehicle simulator. Track data has not been conditioned into solver geometry, and suspension compliance does not itself calculate vehicle axle loads.
 
-## Repository and execution status
-The requested permanent destination is C:\Users\Admin\Documents\aero-lap-coach-simulator. It was absent, and creation was denied by the current session's filesystem permissions. These seven documents are staged for review outside the original; they are not a substitute repository. No Git initialization or documentation commit at the requested destination has occurred.
+## Technical ambition
 
-There is no install/run command for this draft. No existing source is approved for redistribution yet, and no source is included. The original project's supported validation command, executed from its root, is:
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts/check.ps1
-```
-Preservation settings used for this audit are recorded in the validation document. Do not invoke it casually if source/environment preservation cannot be guaranteed.
+The proposed architecture separates input validation and SI unit conversion from a deterministic numerical core. Geometry, atmosphere, aerodynamic loads, tyre capacity, powertrain and braking feed a local vehicle-equilibrium calculation. A fixed-path solver would then construct acceleration- and braking-feasible speed profiles, followed by independent feasibility and convergence checks and reproducible reporting.
 
-Current declared runtime dependencies in the authorized project are Pydantic, Pint, PyYAML and rfc8785, with Python >=3.12 and a documented 3.12 stack. No numerical-array or optimizer dependency is presently required. Future dependencies must be justified per milestone and installed offline on CPU-only Linux before claiming portability.
+The first trajectory model is intended to be quasi-static and spatial, propagating squared speed along a prescribed path. Later work would compare it with an independently formulated optimal-control reference before introducing joint path and speed optimization. Transient dynamics and higher-fidelity aerodynamic or tyre models require additional physical inputs, calibration and their own validation criteria.
 
-## Next approval
-Approve the physics/interface decisions and quantitative budgets before algorithm implementation. Resolve file-specific provenance before any existing source/test/fixture enters the permanent repository. If clearance is unavailable, plan newly authored components from cleared scientific specifications. No licence, global optimality, real-car accuracy, publication or personal historical authorship is asserted.
+The engineering challenge includes implicit coupling between acceleration and axle loads, combined tyre-force constraints, track geometry conventions, periodic circuit closure, numerical error control and constrained optimization. Explicit infeasibility and nonconvergence reporting are part of the intended design.
+
+## Verification and scientific limits
+
+The [numerical validation document](docs/NUMERICAL_VALIDATION.md) records historical checks of the separate foundation: 298 passing tests, passing lint and format checks, and three strict typing errors. The complete check workflow therefore failed. These are recorded foundation results, not tests run from this repository or evidence of lap-solver performance.
+
+Future verification is planned around analytic cases, adversarial inputs, mesh refinement, independently recomputed physical constraints and comparison between distinct numerical formulations. A proposed numerical error budget of 0.01 s for a nominal 60 s synthetic lap is a development target, not an achieved accuracy claim. Runtime and memory budgets are likewise targets rather than measured solver results.
+
+Synthetic agreement and numerical convergence do not establish real-world predictive accuracy. That requires suitable calibration data, held-out experimental validation and measurement uncertainty. A locally optimized trajectory is not proof of a global minimum.
+
+## Development direction
+
+Development is staged so that each capability has a scientific verification basis before the next layer depends on it:
+
+1. Establish a distributable, reproducible foundation and resolve model and interface decisions.
+2. Implement track geometry, powertrain and braking limits, and local vehicle equilibrium.
+3. Build and verify fixed-path speed profiles and elapsed-time integration.
+4. Develop an independent optimal-control reference and reproducible aero/setup studies.
+5. Add sensitivity, uncertainty and synthetic measurement comparisons.
+6. Explore free-path minimum-time optimization and calibrated higher-fidelity dynamics.
+
+The [roadmap](ROADMAP.md) details dependencies, proposed acceptance criteria and resource budgets. These milestones describe future work; they are not released features or delivery commitments. Any future reuse of foundation source requires resolved redistribution rights; this repository currently distributes documentation only.
+
+## Technical documentation
+
+| Document | Contents |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Foundation inventory, proposed subsystem interfaces, coordinates and numerical integration strategy |
+| [Physics models](docs/PHYSICS_MODELS.md) | Implemented foundation equations, assumptions, validity limits and proposed extensions |
+| [Numerical verification and validation](docs/NUMERICAL_VALIDATION.md) | Historical foundation evidence, known gaps, proposed error budgets and benchmark methods |
+| [Development roadmap](ROADMAP.md) | Staged scientific objectives, dependencies and acceptance criteria |
+
+The technical documents retain the detailed foundation record and design proposals. References in them to source modules, tests or tooling describe the separate foundation or a proposed future layout, not files available in this repository.
